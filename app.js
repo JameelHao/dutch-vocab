@@ -62,6 +62,26 @@ function getDueWords(words) {
 }
 
 // ===== Speech Synthesis =====
+let dutchVoices = [];
+
+function loadVoices() {
+    if ('speechSynthesis' in window) {
+        const voices = window.speechSynthesis.getVoices();
+        // Prioritize native Dutch voices
+        dutchVoices = voices.filter(v => v.lang.startsWith('nl'))
+            .sort((a, b) => {
+                // Prefer local/native voices over network voices
+                if (a.localService && !b.localService) return -1;
+                if (!a.localService && b.localService) return 1;
+                // Prefer nl-NL over nl-BE
+                if (a.lang === 'nl-NL' && b.lang !== 'nl-NL') return -1;
+                if (a.lang !== 'nl-NL' && b.lang === 'nl-NL') return 1;
+                return 0;
+            });
+        console.log('Available Dutch voices:', dutchVoices.map(v => `${v.name} (${v.lang})`));
+    }
+}
+
 function speak(text) {
     if ('speechSynthesis' in window) {
         // Cancel any ongoing speech
@@ -69,13 +89,13 @@ function speak(text) {
         
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'nl-NL';
-        utterance.rate = 0.9;
+        utterance.rate = 0.85; // Slightly slower for clarity
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
         
-        // Try to find Dutch voice
-        const voices = window.speechSynthesis.getVoices();
-        const dutchVoice = voices.find(v => v.lang.startsWith('nl'));
-        if (dutchVoice) {
-            utterance.voice = dutchVoice;
+        // Use best available Dutch voice
+        if (dutchVoices.length > 0) {
+            utterance.voice = dutchVoices[0];
         }
         
         window.speechSynthesis.speak(utterance);
@@ -86,9 +106,8 @@ function speak(text) {
 
 // Load voices (needed for some browsers)
 if ('speechSynthesis' in window) {
-    window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
-    };
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
 }
 
 // ===== UI Updates =====

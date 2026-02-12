@@ -1,67 +1,107 @@
+/* Apple-style Dutch Vocabulary App */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+:root {
+    --bg-primary: #f5f5f7;
+    --bg-card: #ffffff;
+    --bg-hover: #f0f0f2;
+    --text-primary: #1d1d1f;
+    --text-secondary: #86868b;
+    --text-tertiary: #aeaeb2;
+    --accent-blue: #007aff;
+    --accent-green: #34c759;
+    --accent-orange: #ff9500;
+    --accent-red: #ff3b30;
+    --accent-purple: #af52de;
+    --border-color: rgba(0,0,0,0.08);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+}
+
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    font-family: 'Microsoft YaHei', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background: var(--bg-primary);
     min-height: 100vh;
-    color: #fff;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
-    max-width: 500px;
+    max-width: 480px;
     margin: 0 auto;
     padding: 20px;
+    padding-bottom: 40px;
 }
 
+/* Header */
 header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    padding-top: 10px;
 }
 
 header h1 {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
 }
 
 .stats {
-    font-size: 0.9rem;
-    color: #888;
+    font-size: 15px;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .stats span {
-    color: #4fc3f7;
-    font-weight: bold;
+    color: var(--accent-blue);
+    font-weight: 600;
 }
 
-/* Tabs */
+/* Tabs - Apple Segmented Control Style */
 .tabs {
     display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 0;
+    margin-bottom: 24px;
+    background: rgba(0,0,0,0.06);
+    border-radius: var(--radius-md);
+    padding: 3px;
 }
 
 .tab {
     flex: 1;
-    padding: 12px;
+    padding: 10px 16px;
     border: none;
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    border-radius: 8px;
+    background: transparent;
+    color: var(--text-primary);
+    border-radius: 9px;
     cursor: pointer;
-    transition: all 0.3s;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    font-family: inherit;
 }
 
 .tab:hover {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.5);
 }
 
 .tab.active {
-    background: #4fc3f7;
-    color: #1a1a2e;
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
 }
 
 .tab-content {
@@ -70,194 +110,234 @@ header h1 {
 
 .tab-content.active {
     display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Card */
 .card {
-    background: rgba(255,255,255,0.05);
-    border-radius: 16px;
-    padding: 30px;
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    padding: 32px 24px;
     text-align: center;
-    min-height: 300px;
+    min-height: 320px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    box-shadow: var(--shadow-md);
 }
 
 .word-type {
     display: inline-block;
-    padding: 4px 12px;
-    background: rgba(255,165,0,0.3);
-    color: #ffa500;
+    padding: 6px 14px;
+    background: rgba(175,82,222,0.12);
+    color: var(--accent-purple);
     border-radius: 20px;
-    font-size: 0.8rem;
-    margin-bottom: 15px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
 }
 
 .word-type.de {
-    background: rgba(255,107,107,0.3);
-    color: #ff6b6b;
+    background: rgba(255,59,48,0.12);
+    color: var(--accent-red);
 }
 
 .word-type.het {
-    background: rgba(78,205,196,0.3);
-    color: #4ecdc4;
+    background: rgba(52,199,89,0.12);
+    color: var(--accent-green);
 }
 
 .word {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 10px;
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
 }
 
 .word-forms {
-    font-size: 0.9rem;
-    color: #888;
-    margin-bottom: 20px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    font-weight: 500;
 }
 
 .speak-btn {
-    background: none;
-    border: 2px solid #4fc3f7;
-    color: #4fc3f7;
-    padding: 8px 20px;
-    border-radius: 20px;
+    background: var(--bg-primary);
+    border: none;
+    color: var(--accent-blue);
+    padding: 12px 24px;
+    border-radius: 100px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 15px;
+    font-weight: 600;
     margin-bottom: 20px;
-    transition: all 0.3s;
+    transition: all 0.2s ease;
+    font-family: inherit;
 }
 
 .speak-btn:hover {
-    background: #4fc3f7;
-    color: #1a1a2e;
+    background: rgba(0,122,255,0.1);
+    transform: scale(1.02);
+}
+
+.speak-btn:active {
+    transform: scale(0.98);
 }
 
 .show-btn {
-    background: #4fc3f7;
+    background: var(--accent-blue);
     border: none;
-    color: #1a1a2e;
-    padding: 15px 40px;
-    border-radius: 8px;
+    color: #fff;
+    padding: 16px 48px;
+    border-radius: 14px;
     cursor: pointer;
-    font-size: 1rem;
-    font-weight: bold;
-    transition: transform 0.2s;
+    font-size: 17px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    font-family: inherit;
 }
 
 .show-btn:hover {
-    transform: scale(1.05);
+    background: #0066d6;
+    transform: scale(1.02);
+}
+
+.show-btn:active {
+    transform: scale(0.98);
 }
 
 .translation {
-    font-size: 1.8rem;
+    font-size: 28px;
+    font-weight: 600;
     margin: 20px 0;
-    color: #4fc3f7;
+    color: var(--accent-blue);
 }
 
 .example {
-    background: rgba(0,0,0,0.2);
-    padding: 15px;
-    border-radius: 8px;
+    background: var(--bg-primary);
+    padding: 16px 20px;
+    border-radius: var(--radius-md);
     margin: 20px 0;
     text-align: left;
 }
 
 .example-dutch {
     font-style: italic;
-    margin-bottom: 5px;
-    color: #fff;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+    font-size: 15px;
 }
 
 .example-chinese {
-    font-size: 0.9rem;
-    color: #888;
+    font-size: 14px;
+    color: var(--text-secondary);
 }
 
-/* Rating Buttons */
+/* Rating Buttons - Apple Style */
 .rating-buttons {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-top: 20px;
+    gap: 10px;
+    margin-top: 24px;
 }
 
 .rating {
-    padding: 12px 8px;
+    padding: 14px 8px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 0.85rem;
-    transition: transform 0.2s;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    font-family: inherit;
 }
 
 .rating:hover {
-    transform: scale(1.05);
+    transform: scale(1.03);
+}
+
+.rating:active {
+    transform: scale(0.97);
 }
 
 .rating.again {
-    background: #ff6b6b;
-    color: #fff;
+    background: rgba(255,59,48,0.15);
+    color: var(--accent-red);
 }
 
 .rating.hard {
-    background: #ffa502;
-    color: #fff;
+    background: rgba(255,149,0,0.15);
+    color: var(--accent-orange);
 }
 
 .rating.good {
-    background: #7bed9f;
-    color: #1a1a2e;
+    background: rgba(52,199,89,0.15);
+    color: var(--accent-green);
 }
 
 .rating.easy {
-    background: #70a1ff;
-    color: #fff;
+    background: rgba(0,122,255,0.15);
+    color: var(--accent-blue);
 }
 
 /* Empty State */
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: #888;
+    color: var(--text-secondary);
 }
 
 .empty-state p:first-child {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
+    font-size: 48px;
+    margin-bottom: 16px;
 }
 
-/* Form */
+.empty-state p:last-child {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* Form - Apple Style */
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
-    color: #888;
-    font-size: 0.9rem;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .form-group input,
 .form-group select {
     width: 100%;
-    padding: 12px;
-    border: 2px solid rgba(255,255,255,0.1);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.05);
-    color: #fff;
-    font-size: 1rem;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 16px;
+    font-family: inherit;
+    transition: all 0.2s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #4fc3f7;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
 }
 
 .form-group input::placeholder {
-    color: #555;
+    color: var(--text-tertiary);
 }
 
 .noun-only,
@@ -268,20 +348,30 @@ header h1 {
 .noun-only.show,
 .verb-only.show {
     display: block;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Verb Conjugation Input Styles */
 .section-label {
-    font-size: 1rem !important;
-    color: #4fc3f7 !important;
-    margin-bottom: 10px;
+    font-size: 15px !important;
+    color: var(--accent-blue) !important;
+    margin-bottom: 12px;
     display: block;
+    font-weight: 600;
 }
 
 .conjugation-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 12px;
+    background: var(--bg-primary);
+    padding: 16px;
+    border-radius: var(--radius-md);
 }
 
 .conj-item {
@@ -291,68 +381,198 @@ header h1 {
 }
 
 .conj-item .pronoun {
-    font-size: 0.85rem;
-    color: #ffa500;
-    min-width: 70px;
+    font-size: 13px;
+    color: var(--accent-orange);
+    min-width: 65px;
     text-align: right;
+    font-weight: 600;
 }
 
 .conj-item input {
     flex: 1;
-    padding: 8px !important;
-    font-size: 0.9rem !important;
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+    border-radius: var(--radius-sm) !important;
 }
 
 .tense-grid {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    background: var(--bg-primary);
+    padding: 16px;
+    border-radius: var(--radius-md);
 }
 
 .tense-item {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
 }
 
 .tense-item label {
-    font-size: 0.85rem;
-    color: #888;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .tense-item input,
 .tense-item select {
-    padding: 10px;
-    border: 2px solid rgba(255,255,255,0.1);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.05);
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 15px;
+    font-family: inherit;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent-blue);
+    border: none;
+    border-radius: var(--radius-md);
     color: #fff;
-    font-size: 0.95rem;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.submit-btn:hover {
+    background: #0066d6;
+}
+
+.submit-btn:active {
+    transform: scale(0.98);
+}
+
+.success-msg {
+    text-align: center;
+    padding: 16px;
+    background: rgba(52,199,89,0.12);
+    color: var(--accent-green);
+    border-radius: var(--radius-md);
+    margin-top: 16px;
+    font-weight: 600;
+}
+
+/* Word List */
+.search-box {
+    margin-bottom: 16px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 16px;
+    font-family: inherit;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
+}
+
+.word-item {
+    background: var(--bg-card);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+}
+
+.word-item:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.word-item-left {
+    flex: 1;
+}
+
+.word-item-dutch {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.word-item-chinese {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.word-item-type {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    margin-left: 8px;
+    font-weight: 600;
+}
+
+.word-item-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.word-item-actions button {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    font-size: 20px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.word-item-actions button:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.word-item-actions .delete:hover {
+    color: var(--accent-red);
 }
 
 /* Verb Conjugation Display (Card view) */
 .verb-conjugation {
-    background: rgba(0,0,0,0.2);
-    border-radius: 12px;
-    padding: 15px;
-    margin: 15px 0;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    margin: 16px 0;
     text-align: left;
 }
 
 .verb-conjugation h4 {
-    font-size: 0.9rem;
-    color: #4fc3f7;
-    margin-bottom: 10px;
+    font-size: 14px;
+    color: var(--accent-blue);
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
     gap: 6px;
+    font-weight: 600;
 }
 
 .conj-table {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-    font-size: 0.9rem;
+    gap: 8px;
+    font-size: 14px;
 }
 
 .conj-row {
@@ -362,32 +582,34 @@ header h1 {
 }
 
 .conj-row .pron {
-    color: #ffa500;
-    min-width: 60px;
-    font-weight: bold;
+    color: var(--accent-orange);
+    min-width: 55px;
+    font-weight: 600;
 }
 
 .conj-row .form {
-    color: #fff;
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 .tense-section {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
 }
 
 .tense-section h4 {
-    font-size: 0.9rem;
-    color: #ff6b6b;
-    margin-bottom: 10px;
+    font-size: 14px;
+    color: var(--accent-red);
+    margin-bottom: 12px;
+    font-weight: 600;
 }
 
 .tense-info {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    font-size: 0.9rem;
+    font-size: 14px;
 }
 
 .tense-row {
@@ -397,148 +619,42 @@ header h1 {
 }
 
 .tense-row .label {
-    color: #888;
+    color: var(--text-secondary);
 }
 
 .tense-row .value {
-    color: #7bed9f;
-    font-weight: bold;
+    color: var(--accent-green);
+    font-weight: 600;
 }
 
 .perfect-example {
-    margin-top: 10px;
-    padding: 10px;
-    background: rgba(123,237,159,0.1);
-    border-radius: 8px;
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: rgba(52,199,89,0.1);
+    border-radius: var(--radius-sm);
     font-style: italic;
-    color: #7bed9f;
+    color: var(--accent-green);
+    font-size: 14px;
 }
 
 /* Word List - Verb Conjugation Compact View */
 .word-item-verb-info {
-    font-size: 0.8rem;
-    color: #666;
-    margin-top: 5px;
+    margin-top: 8px;
 }
 
 .word-item-verb-info .verb-conj-compact {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
 }
 
 .word-item-verb-info .verb-tag {
-    background: rgba(79, 195, 247, 0.2);
-    color: #4fc3f7;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-}
-
-.submit-btn {
-    width: 100%;
-    padding: 15px;
-    background: #4fc3f7;
-    border: none;
-    border-radius: 8px;
-    color: #1a1a2e;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-.submit-btn:hover {
-    background: #3db4e8;
-}
-
-.success-msg {
-    text-align: center;
-    padding: 15px;
-    background: rgba(123,237,159,0.2);
-    color: #7bed9f;
-    border-radius: 8px;
-    margin-top: 15px;
-}
-
-/* Word List */
-.search-box {
-    margin-bottom: 15px;
-}
-
-.search-box input {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid rgba(255,255,255,0.1);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.05);
-    color: #fff;
-    font-size: 1rem;
-}
-
-.search-box input:focus {
-    outline: none;
-    border-color: #4fc3f7;
-}
-
-.word-item {
-    background: rgba(255,255,255,0.05);
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.word-item-left {
-    flex: 1;
-}
-
-.word-item-dutch {
-    font-size: 1.2rem;
-    font-weight: bold;
-}
-
-.word-item-chinese {
-    color: #888;
-    font-size: 0.9rem;
-}
-
-.word-item-type {
-    font-size: 0.75rem;
-    padding: 2px 8px;
-    border-radius: 10px;
-    margin-left: 8px;
-}
-
-.word-item-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.word-item-actions button {
-    background: none;
-    border: none;
-    color: #888;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 5px;
-}
-
-.word-item-actions button:hover {
-    color: #fff;
-}
-
-.word-item-actions .delete:hover {
-    color: #ff6b6b;
-}
-
-/* Progress bar for next review */
-.next-review {
-    font-size: 0.75rem;
-    color: #666;
-    margin-top: 5px;
+    background: rgba(0,122,255,0.1);
+    color: var(--accent-blue);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
 }
 
 /* Mobile optimization */
@@ -548,6 +664,21 @@ header h1 {
     }
     
     .word {
-        font-size: 2rem;
+        font-size: 28px;
     }
+    
+    .conjugation-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
 }
