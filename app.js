@@ -124,6 +124,24 @@ function renderWordList(filter = '') {
             formsText = `(复数: ${word.plural})`;
         }
         
+        // Build verb info for display
+        let verbInfoHtml = '';
+        if (word.type === 'verb') {
+            const tags = [];
+            if (word.conjugation && word.conjugation.ik) {
+                tags.push(`<span class="verb-tag">ik ${word.conjugation.ik}</span>`);
+            }
+            if (word.pastTense) {
+                tags.push(`<span class="verb-tag">过去: ${word.pastTense}</span>`);
+            }
+            if (word.pastParticiple) {
+                tags.push(`<span class="verb-tag">分词: ${word.pastParticiple}</span>`);
+            }
+            if (tags.length > 0) {
+                verbInfoHtml = `<div class="word-item-verb-info"><div class="verb-conj-compact">${tags.join('')}</div></div>`;
+            }
+        }
+        
         return `
             <div class="word-item" data-index="${index}">
                 <div class="word-item-left">
@@ -132,6 +150,7 @@ function renderWordList(filter = '') {
                         <span class="word-item-type word-type ${typeClass}">${typeLabel}</span>
                     </div>
                     <div class="word-item-chinese">${word.chinese} ${formsText}</div>
+                    ${verbInfoHtml}
                 </div>
                 <div class="word-item-actions">
                     <button class="speak-word" data-word="${word.dutch}">🔊</button>
@@ -249,6 +268,59 @@ function showAnswer() {
     document.getElementById('word-chinese').textContent = currentCard.chinese;
     document.getElementById('example-dutch').textContent = currentCard.exampleDutch || '';
     document.getElementById('example-chinese').textContent = currentCard.exampleChinese || '';
+    
+    // Handle verb conjugation display
+    const existingVerbSection = document.querySelector('.verb-conjugation');
+    if (existingVerbSection) {
+        existingVerbSection.remove();
+    }
+    
+    if (currentCard.type === 'verb' && (currentCard.conjugation || currentCard.pastTense || currentCard.pastParticiple)) {
+        const verbSection = document.createElement('div');
+        verbSection.className = 'verb-conjugation';
+        
+        let html = '';
+        
+        // Present tense conjugation
+        if (currentCard.conjugation && Object.values(currentCard.conjugation).some(v => v)) {
+            html += `
+                <h4>📝 现在时变位</h4>
+                <div class="conj-table">
+                    ${currentCard.conjugation.ik ? `<div class="conj-row"><span class="pron">ik</span><span class="form">${currentCard.conjugation.ik}</span></div>` : ''}
+                    ${currentCard.conjugation.jij ? `<div class="conj-row"><span class="pron">jij/je</span><span class="form">${currentCard.conjugation.jij}</span></div>` : ''}
+                    ${currentCard.conjugation.hij ? `<div class="conj-row"><span class="pron">hij/zij</span><span class="form">${currentCard.conjugation.hij}</span></div>` : ''}
+                    ${currentCard.conjugation.wij ? `<div class="conj-row"><span class="pron">wij/we</span><span class="form">${currentCard.conjugation.wij}</span></div>` : ''}
+                    ${currentCard.conjugation.jullie ? `<div class="conj-row"><span class="pron">jullie</span><span class="form">${currentCard.conjugation.jullie}</span></div>` : ''}
+                    ${currentCard.conjugation.zij ? `<div class="conj-row"><span class="pron">zij/ze</span><span class="form">${currentCard.conjugation.zij}</span></div>` : ''}
+                </div>
+            `;
+        }
+        
+        // Past tense and perfect
+        if (currentCard.pastTense || currentCard.pastParticiple) {
+            html += `
+                <div class="tense-section">
+                    <h4>⏰ 过去时 & 完成时</h4>
+                    <div class="tense-info">
+                        ${currentCard.pastTense ? `<div class="tense-row"><span class="label">过去时：</span><span class="value">${currentCard.pastTense}</span></div>` : ''}
+                        ${currentCard.pastParticiple ? `<div class="tense-row"><span class="label">过去分词：</span><span class="value">${currentCard.pastParticiple}</span></div>` : ''}
+                        ${currentCard.auxiliary ? `<div class="tense-row"><span class="label">助动词：</span><span class="value">${currentCard.auxiliary}</span></div>` : ''}
+                    </div>
+                    ${currentCard.pastParticiple && currentCard.auxiliary ? `
+                        <div class="perfect-example">
+                            完成时例：Ik ${currentCard.auxiliary === 'hebben' ? 'heb' : 'ben'} ${currentCard.pastParticiple}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        verbSection.innerHTML = html;
+        
+        // Insert before the rating buttons
+        const ratingButtons = document.querySelector('.rating-buttons');
+        ratingButtons.parentNode.insertBefore(verbSection, ratingButtons);
+    }
 }
 
 function rateCard(rating) {
@@ -319,18 +391,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Show/hide plural field based on word type
+    // Show/hide noun/verb fields based on word type
     document.getElementById('word-type-input').addEventListener('change', (e) => {
         const isNoun = e.target.value.startsWith('noun');
+        const isVerb = e.target.value === 'verb';
         document.querySelector('.noun-only').classList.toggle('show', isNoun);
+        document.querySelectorAll('.verb-only').forEach(el => {
+            el.classList.toggle('show', isVerb);
+        });
     });
     
     // Add form submission
     document.getElementById('add-form').addEventListener('submit', (e) => {
         e.preventDefault();
         
+        const type = document.getElementById('word-type-input').value;
         const wordData = {
-            type: document.getElementById('word-type-input').value,
+            type: type,
             dutch: document.getElementById('dutch-input').value.trim(),
             plural: document.getElementById('plural-input').value.trim(),
             chinese: document.getElementById('chinese-input').value.trim(),
@@ -338,7 +415,31 @@ document.addEventListener('DOMContentLoaded', () => {
             exampleChinese: document.getElementById('example-chinese-input').value.trim()
         };
         
+        // Add verb conjugation data if it's a verb
+        if (type === 'verb') {
+            wordData.conjugation = {
+                ik: document.getElementById('conj-ik').value.trim(),
+                jij: document.getElementById('conj-jij').value.trim(),
+                hij: document.getElementById('conj-hij').value.trim(),
+                wij: document.getElementById('conj-wij').value.trim(),
+                jullie: document.getElementById('conj-jullie').value.trim(),
+                zij: document.getElementById('conj-zij').value.trim()
+            };
+            wordData.pastTense = document.getElementById('past-tense').value.trim();
+            wordData.pastParticiple = document.getElementById('past-participle').value.trim();
+            wordData.auxiliary = document.getElementById('auxiliary-verb').value;
+        }
+        
         addWord(wordData);
+        
+        // Also reset verb fields
+        if (type === 'verb') {
+            ['conj-ik', 'conj-jij', 'conj-hij', 'conj-wij', 'conj-jullie', 'conj-zij', 
+             'past-tense', 'past-participle'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('auxiliary-verb').value = 'hebben';
+        }
     });
     
     // Review buttons
@@ -404,7 +505,18 @@ function loadSampleData() {
                 plural: '',
                 chinese: '吃',
                 exampleDutch: 'Ik eet een appel.',
-                exampleChinese: '我在吃苹果。'
+                exampleChinese: '我在吃苹果。',
+                conjugation: {
+                    ik: 'eet',
+                    jij: 'eet',
+                    hij: 'eet',
+                    wij: 'eten',
+                    jullie: 'eten',
+                    zij: 'eten'
+                },
+                pastTense: 'at / aten',
+                pastParticiple: 'gegeten',
+                auxiliary: 'hebben'
             },
             {
                 id: '4',

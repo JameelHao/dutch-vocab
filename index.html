@@ -84,6 +84,58 @@
                     <input type="text" id="plural-input" placeholder="例：huizen">
                 </div>
                 
+                <!-- Verb conjugation fields -->
+                <div class="form-group verb-only">
+                    <label class="section-label">📝 现在时人称变位</label>
+                    <div class="conjugation-grid">
+                        <div class="conj-item">
+                            <span class="pronoun">ik</span>
+                            <input type="text" id="conj-ik" placeholder="例：eet">
+                        </div>
+                        <div class="conj-item">
+                            <span class="pronoun">jij/je</span>
+                            <input type="text" id="conj-jij" placeholder="例：eet">
+                        </div>
+                        <div class="conj-item">
+                            <span class="pronoun">hij/zij/het</span>
+                            <input type="text" id="conj-hij" placeholder="例：eet">
+                        </div>
+                        <div class="conj-item">
+                            <span class="pronoun">wij/we</span>
+                            <input type="text" id="conj-wij" placeholder="例：eten">
+                        </div>
+                        <div class="conj-item">
+                            <span class="pronoun">jullie</span>
+                            <input type="text" id="conj-jullie" placeholder="例：eten">
+                        </div>
+                        <div class="conj-item">
+                            <span class="pronoun">zij/ze</span>
+                            <input type="text" id="conj-zij" placeholder="例：eten">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group verb-only">
+                    <label class="section-label">⏰ 过去时和完成时</label>
+                    <div class="tense-grid">
+                        <div class="tense-item">
+                            <label>过去时 (verleden tijd)</label>
+                            <input type="text" id="past-tense" placeholder="例：at / aten">
+                        </div>
+                        <div class="tense-item">
+                            <label>过去分词 (voltooid deelwoord)</label>
+                            <input type="text" id="past-participle" placeholder="例：gegeten">
+                        </div>
+                        <div class="tense-item">
+                            <label>助动词</label>
+                            <select id="auxiliary-verb">
+                                <option value="hebben">hebben (有)</option>
+                                <option value="zijn">zijn (是)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="form-group">
                     <label>中文意思</label>
                     <input type="text" id="chinese-input" placeholder="例：房子" required>
