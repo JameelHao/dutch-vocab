@@ -341,7 +341,8 @@ function getTypeLabel(type) {
 // ===== Review System =====
 let currentCard = null;
 let dueQueue = [];
-let sessionReviewed = 0;
+let sessionReviewed = 0;  // 总评分次数
+let sessionNewLearned = 0; // 新学的词数量
 
 const BATCH_SIZE = 10; // 每次学习10个新词
 
@@ -533,7 +534,8 @@ function showCompletionState() {
     noCardsEl.innerHTML = `
         <p>🎉</p>
         <p>${statusText}</p>
-        ${sessionReviewed > 0 ? `<p style="color:var(--accent-green);margin-top:10px;">本次学习了 ${sessionReviewed} 个单词</p>` : ''}
+        ${sessionNewLearned > 0 ? `<p style="color:var(--accent-green);margin-top:10px;">本次新学了 ${sessionNewLearned} 个词</p>` : ''}
+        ${sessionReviewed > sessionNewLearned ? `<p style="color:var(--accent-blue);font-size:14px;">复习了 ${sessionReviewed - sessionNewLearned} 次</p>` : ''}
         ${nextReviewText}
         <p style="margin-top:15px;">${actionButton}</p>
     `;
@@ -551,6 +553,7 @@ function forceNextBatch() {
     if (newWords.length > 0) {
         dueQueue = newWords.slice(0, BATCH_SIZE);
         sessionReviewed = 0;
+        sessionNewLearned = 0;
         
         document.getElementById('no-cards').style.display = 'none';
         document.getElementById('card-container').style.display = 'flex';
@@ -564,12 +567,19 @@ function rateCard(rating) {
     const wordIndex = data.words.findIndex(w => w.id === currentCard.id);
     
     if (wordIndex !== -1) {
+        // 检查是否是第一次学习这个词
+        const isNewWord = !data.words[wordIndex].lastReview;
+        
         const updates = calculateNextReview(data.words[wordIndex], rating);
         data.words[wordIndex] = { ...data.words[wordIndex], ...updates };
         saveData(data);
         
         // Update session stats
         sessionReviewed++;
+        if (isNewWord) {
+            sessionNewLearned++; // 只有新词才计入
+        }
+        
         const stats = loadStats();
         stats.todayReviewed++;
         stats.totalReviews++;
