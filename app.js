@@ -67,25 +67,25 @@ function calculateNextReview(word, rating) {
     if (!repetitions) repetitions = 0;
     
     if (rating < 2) {
-        // Failed - reset but keep some progress
+        // Failed - reset
         repetitions = 0;
-        interval = 0.08; // 5 seconds for testing
+        interval = 1; // 1 minute for re-review
     } else {
         repetitions += 1;
         
-        // Calculate new interval (in minutes) - TEST MODE: 5 seconds
+        // Calculate new interval (in minutes)
         if (repetitions === 1) {
-            interval = 0.08; // 5 seconds for testing
+            interval = 10; // 10 minutes
         } else if (repetitions === 2) {
-            interval = 0.08; // 5 seconds for testing
+            interval = 60; // 1 hour
         } else if (repetitions === 3) {
-            interval = 0.08; // 5 seconds for testing
+            interval = 60 * 8; // 8 hours
         } else if (repetitions === 4) {
-            interval = 0.08; // 5 seconds for testing
+            interval = 60 * 24; // 1 day
         } else if (repetitions === 5) {
-            interval = 0.08; // 5 seconds for testing
+            interval = 60 * 24 * 3; // 3 days
         } else {
-            interval = 0.08; // 5 seconds for testing
+            interval = Math.round(interval * easeFactor);
         }
         
         // Adjust based on rating
@@ -664,81 +664,26 @@ document.addEventListener('DOMContentLoaded', () => {
     startReview();
 });
 
-// ===== Sample Data (for testing) =====
-function loadSampleData() {
+// ===== Load Dictionary =====
+function loadDictionary() {
     const data = loadData();
-    if (data.words.length === 0) {
-        console.log('[Init] Loading sample data...');
-        const sampleWords = [
-            {
-                id: '1',
-                type: 'noun-het',
-                dutch: 'huis',
-                plural: 'huizen',
-                chinese: '房子',
-                exampleDutch: 'Het huis is groot.',
-                exampleChinese: '这房子很大。'
-            },
-            {
-                id: '2',
-                type: 'noun-de',
-                dutch: 'man',
-                plural: 'mannen',
-                chinese: '男人',
-                exampleDutch: 'De man loopt op straat.',
-                exampleChinese: '男人在街上走。'
-            },
-            {
-                id: '3',
-                type: 'verb',
-                dutch: 'eten',
-                plural: '',
-                chinese: '吃',
-                exampleDutch: 'Ik eet een appel.',
-                exampleChinese: '我在吃苹果。',
-                conjugation: {
-                    ik: 'eet',
-                    jij: 'eet',
-                    hij: 'eet',
-                    wij: 'eten',
-                    jullie: 'eten',
-                    zij: 'eten'
-                },
-                pastTense: 'at / aten',
-                pastParticiple: 'gegeten',
-                auxiliary: 'hebben'
-            },
-            {
-                id: '4',
-                type: 'noun-de',
-                dutch: 'vrouw',
-                plural: 'vrouwen',
-                chinese: '女人',
-                exampleDutch: 'De vrouw leest een boek.',
-                exampleChinese: '女人在读书。'
-            },
-            {
-                id: '5',
-                type: 'noun-het',
-                dutch: 'boek',
-                plural: 'boeken',
-                chinese: '书',
-                exampleDutch: 'Het boek is interessant.',
-                exampleChinese: '这本书很有趣。'
-            }
-        ];
+    if (data.words.length === 0 && typeof DUTCH_DICTIONARY !== 'undefined') {
+        console.log('[Init] Loading dictionary with', DUTCH_DICTIONARY.length, 'words...');
         
-        sampleWords.forEach(w => {
-            w.nextReview = Date.now();
-            w.interval = 0;
-            w.easeFactor = 2.5;
-            w.repetitions = 0;
-            w.lastReview = null;
-        });
+        const words = DUTCH_DICTIONARY.map((w, index) => ({
+            id: (index + 1).toString(),
+            ...w,
+            nextReview: Date.now(), // All due immediately for new users
+            interval: 0,
+            easeFactor: 2.5,
+            repetitions: 0,
+            lastReview: null
+        }));
         
-        data.words = sampleWords;
+        data.words = words;
         saveData(data);
+        console.log('[Init] Dictionary loaded successfully!');
     }
 }
 
-loadSampleData();
+loadDictionary();
