@@ -170,5 +170,80 @@
     </div>
 
     <script src="app.js"></script>
+    
+    <!-- 诊断面板 -->
+    <div id="debug-panel" style="
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        background: #1a1a2e;
+        color: #4fc3f7;
+        padding: 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-family: monospace;
+        max-height: 150px;
+        overflow-y: auto;
+        z-index: 9999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    ">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <strong>🔍 诊断面板</strong>
+            <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#ff6b6b;cursor:pointer;">✕ 关闭</button>
+        </div>
+        <div id="debug-content">检测中...</div>
+    </div>
+    <script>
+        // 诊断脚本
+        (function() {
+            const panel = document.getElementById('debug-content');
+            const results = [];
+            
+            // 1. 检查 localStorage 是否可用
+            try {
+                localStorage.setItem('_test_', '1');
+                localStorage.removeItem('_test_');
+                results.push('✅ localStorage 可用');
+            } catch(e) {
+                results.push('❌ localStorage 不可用: ' + e.message);
+            }
+            
+            // 2. 检查当前存储的数据
+            const rawData = localStorage.getItem('dutch-vocab-data');
+            if (rawData) {
+                try {
+                    const data = JSON.parse(rawData);
+                    results.push(`✅ 已存储 ${data.words?.length || 0} 个单词`);
+                    
+                    // 检查每个单词的状态
+                    if (data.words && data.words.length > 0) {
+                        const now = Date.now();
+                        const dueCount = data.words.filter(w => !w.nextReview || w.nextReview <= now).length;
+                        const reviewedCount = data.words.filter(w => w.lastReview).length;
+                        results.push(`📊 待复习: ${dueCount}, 已复习过: ${reviewedCount}`);
+                        
+                        // 显示第一个单词的详细状态
+                        const w = data.words[0];
+                        results.push(`📝 ${w.dutch}: rep=${w.repetitions}, lastReview=${w.lastReview ? new Date(w.lastReview).toLocaleTimeString() : '无'}`);
+                    }
+                } catch(e) {
+                    results.push('❌ 数据解析错误: ' + e.message);
+                }
+            } else {
+                results.push('⚠️ 无存储数据 (首次访问或已清除)');
+            }
+            
+            // 3. 检查页面加载时间
+            results.push(`🕐 页面加载: ${new Date().toLocaleTimeString()}`);
+            
+            // 4. 检查是否是无痕模式
+            if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+                results.push('⚠️ Safari 无痕模式会禁用 localStorage');
+            }
+            
+            panel.innerHTML = results.join('<br>');
+        })();
+    </script>
 </body>
 </html>
