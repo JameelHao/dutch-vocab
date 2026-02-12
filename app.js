@@ -69,23 +69,23 @@ function calculateNextReview(word, rating) {
     if (rating < 2) {
         // Failed - reset but keep some progress
         repetitions = 0;
-        interval = 1; // 1 minute for immediate re-review
+        interval = 0.08; // 5 seconds for testing
     } else {
         repetitions += 1;
         
-        // Calculate new interval (in minutes)
+        // Calculate new interval (in minutes) - TEST MODE: 5 seconds
         if (repetitions === 1) {
-            interval = 10; // 10 minutes
+            interval = 0.08; // 5 seconds for testing
         } else if (repetitions === 2) {
-            interval = 60; // 1 hour
+            interval = 0.08; // 5 seconds for testing
         } else if (repetitions === 3) {
-            interval = 60 * 8; // 8 hours
+            interval = 0.08; // 5 seconds for testing
         } else if (repetitions === 4) {
-            interval = 60 * 24; // 1 day
+            interval = 0.08; // 5 seconds for testing
         } else if (repetitions === 5) {
-            interval = 60 * 24 * 3; // 3 days
+            interval = 0.08; // 5 seconds for testing
         } else {
-            interval = Math.round(interval * easeFactor);
+            interval = 0.08; // 5 seconds for testing
         }
         
         // Adjust based on rating
