@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dutch Vocabulary - 荷兰语记忆曲线</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🇳🇱 荷兰语单词记忆</h1>
+            <div class="stats">
+                <span id="due-count">0</span> 待复习 | 
+                <span id="total-count">0</span> 总词汇
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab active" data-tab="review">复习</button>
+            <button class="tab" data-tab="add">添加单词</button>
+            <button class="tab" data-tab="list">词汇表</button>
+        </nav>
+
+        <!-- Review Tab -->
+        <section id="review-tab" class="tab-content active">
+            <div id="no-cards" class="empty-state">
+                <p>🎉 没有待复习的单词！</p>
+                <p>去添加一些新单词吧</p>
+            </div>
+            
+            <div id="card-container" class="card" style="display:none;">
+                <div class="card-front" id="card-front">
+                    <div class="word-type" id="word-type"></div>
+                    <div class="word" id="word-dutch"></div>
+                    <div class="word-forms" id="word-forms"></div>
+                    <button class="speak-btn" id="speak-btn">🔊 发音</button>
+                    <button class="show-btn" id="show-answer">显示答案</button>
+                </div>
+                
+                <div class="card-back" id="card-back" style="display:none;">
+                    <div class="word-type" id="word-type-back"></div>
+                    <div class="word" id="word-dutch-back"></div>
+                    <div class="word-forms" id="word-forms-back"></div>
+                    <button class="speak-btn" id="speak-btn-back">🔊 发音</button>
+                    <div class="translation" id="word-chinese"></div>
+                    <div class="example">
+                        <div class="example-dutch" id="example-dutch"></div>
+                        <div class="example-chinese" id="example-chinese"></div>
+                    </div>
+                    
+                    <div class="rating-buttons">
+                        <button class="rating again" data-rating="1">😵 忘了</button>
+                        <button class="rating hard" data-rating="2">😓 困难</button>
+                        <button class="rating good" data-rating="3">😊 记得</button>
+                        <button class="rating easy" data-rating="4">😎 简单</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Word Tab -->
+        <section id="add-tab" class="tab-content">
+            <form id="add-form">
+                <div class="form-group">
+                    <label>词性</label>
+                    <select id="word-type-input">
+                        <option value="noun-de">名词 (de)</option>
+                        <option value="noun-het">名词 (het)</option>
+                        <option value="verb">动词</option>
+                        <option value="adjective">形容词</option>
+                        <option value="adverb">副词</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>荷兰语单词</label>
+                    <input type="text" id="dutch-input" placeholder="例：huis" required>
+                </div>
+                
+                <div class="form-group noun-only">
+                    <label>复数形式</label>
+                    <input type="text" id="plural-input" placeholder="例：huizen">
+                </div>
+                
+                <div class="form-group">
+                    <label>中文意思</label>
+                    <input type="text" id="chinese-input" placeholder="例：房子" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>例句（荷兰语）</label>
+                    <input type="text" id="example-dutch-input" placeholder="例：Het huis is groot.">
+                </div>
+                
+                <div class="form-group">
+                    <label>例句（中文）</label>
+                    <input type="text" id="example-chinese-input" placeholder="例：这房子很大。">
+                </div>
+                
+                <button type="submit" class="submit-btn">添加单词</button>
+            </form>
+            
+            <div id="add-success" class="success-msg" style="display:none;">
+                ✅ 单词添加成功！
+            </div>
+        </section>
+
+        <!-- Word List Tab -->
+        <section id="list-tab" class="tab-content">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="搜索单词...">
+            </div>
+            <div id="word-list"></div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
