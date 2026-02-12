@@ -71,6 +71,49 @@ header h1 {
     font-weight: 600;
 }
 
+/* Progress Info */
+.progress-info {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+.progress-item {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Review Status Tags */
+.review-status {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    font-weight: 600;
+}
+
+.status-new {
+    background: rgba(0,122,255,0.12);
+    color: var(--accent-blue);
+}
+
+.status-due {
+    background: rgba(255,149,0,0.12);
+    color: var(--accent-orange);
+}
+
+.status-scheduled {
+    background: rgba(142,142,147,0.12);
+    color: var(--text-secondary);
+}
+
+.status-mastered {
+    background: rgba(52,199,89,0.12);
+    color: var(--accent-green);
+}
+
 /* Tabs - Apple Segmented Control Style */
 .tabs {
     display: flex;

@@ -2,14 +2,58 @@
 
 // ===== Data Management =====
 const STORAGE_KEY = 'dutch-vocab-data';
+const STATS_KEY = 'dutch-vocab-stats';
 
 function loadData() {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : { words: [] };
+    try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        const parsed = data ? JSON.parse(data) : { words: [] };
+        console.log('[Data] Loaded', parsed.words.length, 'words');
+        return parsed;
+    } catch (e) {
+        console.error('[Data] Error loading data:', e);
+        return { words: [] };
+    }
 }
 
 function saveData(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        console.log('[Data] Saved', data.words.length, 'words');
+    } catch (e) {
+        console.error('[Data] Error saving data:', e);
+        alert('保存失败！请检查浏览器存储设置。');
+    }
+}
+
+function loadStats() {
+    try {
+        const stats = localStorage.getItem(STATS_KEY);
+        return stats ? JSON.parse(stats) : { 
+            todayReviewed: 0, 
+            todayNew: 0,
+            lastDate: new Date().toDateString(),
+            totalReviews: 0
+        };
+    } catch (e) {
+        return { todayReviewed: 0, todayNew: 0, lastDate: new Date().toDateString(), totalReviews: 0 };
+    }
+}
+
+function saveStats(stats) {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+}
+
+function resetDailyStats() {
+    const stats = loadStats();
+    const today = new Date().toDateString();
+    if (stats.lastDate !== today) {
+        stats.todayReviewed = 0;
+        stats.todayNew = 0;
+        stats.lastDate = today;
+        saveStats(stats);
+    }
+    return stats;
 }
 
 // ===== Spaced Repetition Algorithm (SM-2 simplified) =====
@@ -23,29 +67,43 @@ function calculateNextReview(word, rating) {
     if (!repetitions) repetitions = 0;
     
     if (rating < 2) {
-        // Failed - reset
+        // Failed - reset but keep some progress
         repetitions = 0;
         interval = 1; // 1 minute for immediate re-review
     } else {
         repetitions += 1;
         
-        // Calculate new interval
+        // Calculate new interval (in minutes)
         if (repetitions === 1) {
-            interval = 1; // 1 minute
-        } else if (repetitions === 2) {
             interval = 10; // 10 minutes
+        } else if (repetitions === 2) {
+            interval = 60; // 1 hour
         } else if (repetitions === 3) {
+            interval = 60 * 8; // 8 hours
+        } else if (repetitions === 4) {
             interval = 60 * 24; // 1 day
+        } else if (repetitions === 5) {
+            interval = 60 * 24 * 3; // 3 days
         } else {
             interval = Math.round(interval * easeFactor);
+        }
+        
+        // Adjust based on rating
+        if (rating === 2) { // Hard
+            interval = Math.round(interval * 0.8);
+        } else if (rating === 4) { // Easy
+            interval = Math.round(interval * 1.3);
         }
         
         // Adjust ease factor
         easeFactor = easeFactor + (0.1 - (4 - rating) * (0.08 + (4 - rating) * 0.02));
         if (easeFactor < 1.3) easeFactor = 1.3;
+        if (easeFactor > 3.0) easeFactor = 3.0;
     }
     
     const nextReview = now + interval * 60 * 1000; // Convert minutes to ms
+    
+    console.log(`[SR] ${word.dutch}: rating=${rating}, rep=${repetitions}, interval=${interval}min, next=${new Date(nextReview).toLocaleString()}`);
     
     return {
         interval,
@@ -61,39 +119,81 @@ function getDueWords(words) {
     return words.filter(w => !w.nextReview || w.nextReview <= now);
 }
 
+function getNewWords(words) {
+    return words.filter(w => !w.lastReview);
+}
+
+function getLearningWords(words) {
+    // Words that have been reviewed but not yet mastered (repetitions < 5)
+    return words.filter(w => w.lastReview && w.repetitions < 5);
+}
+
+function getMasteredWords(words) {
+    return words.filter(w => w.repetitions >= 5);
+}
+
+// ===== Time Formatting =====
+function formatNextReview(nextReview) {
+    if (!nextReview) return '立即复习';
+    
+    const now = Date.now();
+    const diff = nextReview - now;
+    
+    if (diff <= 0) return '现在';
+    
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days > 0) return `${days}天后`;
+    if (hours > 0) return `${hours}小时后`;
+    if (minutes > 0) return `${minutes}分钟后`;
+    return '即将';
+}
+
+function getReviewStatus(word) {
+    if (!word.lastReview) return { text: '新词', class: 'status-new' };
+    
+    const now = Date.now();
+    if (!word.nextReview || word.nextReview <= now) {
+        return { text: '待复习', class: 'status-due' };
+    }
+    
+    if (word.repetitions >= 5) {
+        return { text: '已掌握', class: 'status-mastered' };
+    }
+    
+    return { text: formatNextReview(word.nextReview), class: 'status-scheduled' };
+}
+
 // ===== Speech Synthesis =====
 let dutchVoices = [];
 
 function loadVoices() {
     if ('speechSynthesis' in window) {
         const voices = window.speechSynthesis.getVoices();
-        // Prioritize native Dutch voices
         dutchVoices = voices.filter(v => v.lang.startsWith('nl'))
             .sort((a, b) => {
-                // Prefer local/native voices over network voices
                 if (a.localService && !b.localService) return -1;
                 if (!a.localService && b.localService) return 1;
-                // Prefer nl-NL over nl-BE
                 if (a.lang === 'nl-NL' && b.lang !== 'nl-NL') return -1;
                 if (a.lang !== 'nl-NL' && b.lang === 'nl-NL') return 1;
                 return 0;
             });
-        console.log('Available Dutch voices:', dutchVoices.map(v => `${v.name} (${v.lang})`));
+        console.log('[TTS] Dutch voices:', dutchVoices.map(v => `${v.name} (${v.lang})`));
     }
 }
 
 function speak(text) {
     if ('speechSynthesis' in window) {
-        // Cancel any ongoing speech
         window.speechSynthesis.cancel();
         
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'nl-NL';
-        utterance.rate = 0.85; // Slightly slower for clarity
+        utterance.rate = 0.85;
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
         
-        // Use best available Dutch voice
         if (dutchVoices.length > 0) {
             utterance.voice = dutchVoices[0];
         }
@@ -104,7 +204,6 @@ function speak(text) {
     }
 }
 
-// Load voices (needed for some browsers)
 if ('speechSynthesis' in window) {
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
@@ -113,10 +212,23 @@ if ('speechSynthesis' in window) {
 // ===== UI Updates =====
 function updateStats() {
     const data = loadData();
+    const stats = resetDailyStats();
     const dueWords = getDueWords(data.words);
+    const newWords = getNewWords(data.words);
+    const masteredWords = getMasteredWords(data.words);
     
     document.getElementById('due-count').textContent = dueWords.length;
     document.getElementById('total-count').textContent = data.words.length;
+    
+    // Update progress info if element exists
+    const progressEl = document.getElementById('progress-info');
+    if (progressEl) {
+        progressEl.innerHTML = `
+            <span class="progress-item">📚 新词 ${newWords.length}</span>
+            <span class="progress-item">🔄 学习中 ${getLearningWords(data.words).length}</span>
+            <span class="progress-item">✅ 已掌握 ${masteredWords.length}</span>
+        `;
+    }
 }
 
 function renderWordList(filter = '') {
@@ -129,21 +241,33 @@ function renderWordList(filter = '') {
     );
     
     if (filtered.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>没有找到单词</p></div>';
+        container.innerHTML = '<div class="empty-state"><p>📚</p><p>没有找到单词</p></div>';
         return;
     }
+    
+    // Sort: due first, then by next review time
+    filtered.sort((a, b) => {
+        const now = Date.now();
+        const aDue = !a.nextReview || a.nextReview <= now;
+        const bDue = !b.nextReview || b.nextReview <= now;
+        
+        if (aDue && !bDue) return -1;
+        if (!aDue && bDue) return 1;
+        
+        return (a.nextReview || 0) - (b.nextReview || 0);
+    });
     
     container.innerHTML = filtered.map((word, index) => {
         const typeClass = word.type.includes('de') ? 'de' : 
                          word.type.includes('het') ? 'het' : '';
         const typeLabel = getTypeLabel(word.type);
+        const status = getReviewStatus(word);
         
         let formsText = '';
         if (word.type.startsWith('noun') && word.plural) {
             formsText = `(复数: ${word.plural})`;
         }
         
-        // Build verb info for display
         let verbInfoHtml = '';
         if (word.type === 'verb') {
             const tags = [];
@@ -167,6 +291,7 @@ function renderWordList(filter = '') {
                     <div>
                         <span class="word-item-dutch">${word.dutch}</span>
                         <span class="word-item-type word-type ${typeClass}">${typeLabel}</span>
+                        <span class="review-status ${status.class}">${status.text}</span>
                     </div>
                     <div class="word-item-chinese">${word.chinese} ${formsText}</div>
                     ${verbInfoHtml}
@@ -179,7 +304,6 @@ function renderWordList(filter = '') {
         `;
     }).join('');
     
-    // Add event listeners
     container.querySelectorAll('.speak-word').forEach(btn => {
         btn.addEventListener('click', () => speak(btn.dataset.word));
     });
@@ -216,17 +340,39 @@ function getTypeLabel(type) {
 // ===== Review System =====
 let currentCard = null;
 let dueQueue = [];
+let sessionReviewed = 0;
 
 function startReview() {
     const data = loadData();
     dueQueue = getDueWords(data.words);
     
+    console.log('[Review] Due words:', dueQueue.length);
+    
+    const noCardsEl = document.getElementById('no-cards');
+    const cardContainer = document.getElementById('card-container');
+    
     if (dueQueue.length === 0) {
-        document.getElementById('no-cards').style.display = 'block';
-        document.getElementById('card-container').style.display = 'none';
+        // Show completion message with next review time
+        const nextWord = data.words
+            .filter(w => w.nextReview)
+            .sort((a, b) => a.nextReview - b.nextReview)[0];
+        
+        let nextReviewText = '';
+        if (nextWord) {
+            nextReviewText = `<p style="margin-top:10px;font-size:14px;">下次复习：${formatNextReview(nextWord.nextReview)}</p>`;
+        }
+        
+        noCardsEl.innerHTML = `
+            <p>🎉</p>
+            <p>太棒了！暂无待复习单词</p>
+            ${sessionReviewed > 0 ? `<p style="color:var(--accent-green);margin-top:10px;">本次复习了 ${sessionReviewed} 个单词</p>` : ''}
+            ${nextReviewText}
+        `;
+        noCardsEl.style.display = 'block';
+        cardContainer.style.display = 'none';
     } else {
-        document.getElementById('no-cards').style.display = 'none';
-        document.getElementById('card-container').style.display = 'flex';
+        noCardsEl.style.display = 'none';
+        cardContainer.style.display = 'flex';
         showNextCard();
     }
     
@@ -239,15 +385,20 @@ function showNextCard() {
         return;
     }
     
-    // Shuffle and pick one
+    // Pick randomly from due queue
     const randomIndex = Math.floor(Math.random() * dueQueue.length);
     currentCard = dueQueue[randomIndex];
+    
+    // Update queue count display
+    const queueCountEl = document.getElementById('queue-count');
+    if (queueCountEl) {
+        queueCountEl.textContent = `剩余 ${dueQueue.length} 个`;
+    }
     
     // Show front
     document.getElementById('card-front').style.display = 'block';
     document.getElementById('card-back').style.display = 'none';
     
-    // Fill front content
     const typeClass = currentCard.type.includes('de') ? 'de' : 
                      currentCard.type.includes('het') ? 'het' : '';
     const typeLabel = getTypeLabel(currentCard.type);
@@ -257,10 +408,8 @@ function showNextCard() {
     document.getElementById('word-dutch').textContent = currentCard.dutch;
     
     let formsText = '';
-    if (currentCard.type.startsWith('noun')) {
-        if (currentCard.plural) {
-            formsText = `单数: ${currentCard.dutch} | 复数: ${currentCard.plural}`;
-        }
+    if (currentCard.type.startsWith('noun') && currentCard.plural) {
+        formsText = `单数: ${currentCard.dutch} | 复数: ${currentCard.plural}`;
     }
     document.getElementById('word-forms').textContent = formsText;
 }
@@ -269,7 +418,6 @@ function showAnswer() {
     document.getElementById('card-front').style.display = 'none';
     document.getElementById('card-back').style.display = 'block';
     
-    // Fill back content
     const typeClass = currentCard.type.includes('de') ? 'de' : 
                      currentCard.type.includes('het') ? 'het' : '';
     const typeLabel = getTypeLabel(currentCard.type);
@@ -300,7 +448,6 @@ function showAnswer() {
         
         let html = '';
         
-        // Present tense conjugation
         if (currentCard.conjugation && Object.values(currentCard.conjugation).some(v => v)) {
             html += `
                 <h4>📝 现在时变位</h4>
@@ -315,7 +462,6 @@ function showAnswer() {
             `;
         }
         
-        // Past tense and perfect
         if (currentCard.pastTense || currentCard.pastParticiple) {
             html += `
                 <div class="tense-section">
@@ -336,7 +482,6 @@ function showAnswer() {
         
         verbSection.innerHTML = html;
         
-        // Insert before the rating buttons
         const ratingButtons = document.querySelector('.rating-buttons');
         ratingButtons.parentNode.insertBefore(verbSection, ratingButtons);
     }
@@ -350,6 +495,13 @@ function rateCard(rating) {
         const updates = calculateNextReview(data.words[wordIndex], rating);
         data.words[wordIndex] = { ...data.words[wordIndex], ...updates };
         saveData(data);
+        
+        // Update session stats
+        sessionReviewed++;
+        const stats = loadStats();
+        stats.todayReviewed++;
+        stats.totalReviews++;
+        saveStats(stats);
     }
     
     // Remove from queue
@@ -357,7 +509,12 @@ function rateCard(rating) {
     
     // If failed (rating 1), add back to queue for re-review
     if (rating === 1) {
-        dueQueue.push(currentCard);
+        // Reload the word from saved data
+        const refreshedData = loadData();
+        const refreshedWord = refreshedData.words.find(w => w.id === currentCard.id);
+        if (refreshedWord) {
+            dueQueue.push(refreshedWord);
+        }
     }
     
     showNextCard();
@@ -379,15 +536,19 @@ function addWord(wordData) {
     
     data.words.push(newWord);
     saveData(data);
+    
+    // Update stats
+    const stats = loadStats();
+    stats.todayNew++;
+    saveStats(stats);
+    
     updateStats();
     
-    // Show success message
     document.getElementById('add-success').style.display = 'block';
     setTimeout(() => {
         document.getElementById('add-success').style.display = 'none';
     }, 2000);
     
-    // Reset form
     document.getElementById('add-form').reset();
 }
 
@@ -434,7 +595,6 @@ document.addEventListener('DOMContentLoaded', () => {
             exampleChinese: document.getElementById('example-chinese-input').value.trim()
         };
         
-        // Add verb conjugation data if it's a verb
         if (type === 'verb') {
             wordData.conjugation = {
                 ik: document.getElementById('conj-ik').value.trim(),
@@ -451,7 +611,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         addWord(wordData);
         
-        // Also reset verb fields
         if (type === 'verb') {
             ['conj-ik', 'conj-jij', 'conj-hij', 'conj-wij', 'conj-jullie', 'conj-zij', 
              'past-tense', 'past-participle'].forEach(id => {
@@ -489,7 +648,18 @@ document.addEventListener('DOMContentLoaded', () => {
         renderWordList(e.target.value);
     });
     
+    // Debug button (hidden, for troubleshooting)
+    window.debugVocab = () => {
+        const data = loadData();
+        console.log('=== Vocabulary Debug ===');
+        console.log('Total words:', data.words.length);
+        data.words.forEach(w => {
+            console.log(`${w.dutch}: rep=${w.repetitions}, interval=${w.interval}min, next=${w.nextReview ? new Date(w.nextReview).toLocaleString() : 'N/A'}`);
+        });
+    };
+    
     // Initialize
+    resetDailyStats();
     updateStats();
     startReview();
 });
@@ -498,6 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadSampleData() {
     const data = loadData();
     if (data.words.length === 0) {
+        console.log('[Init] Loading sample data...');
         const sampleWords = [
             {
                 id: '1',
@@ -562,6 +733,7 @@ function loadSampleData() {
             w.interval = 0;
             w.easeFactor = 2.5;
             w.repetitions = 0;
+            w.lastReview = null;
         });
         
         data.words = sampleWords;
@@ -569,5 +741,4 @@ function loadSampleData() {
     }
 }
 
-// Uncomment to load sample data on first run
 loadSampleData();
