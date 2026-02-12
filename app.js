@@ -343,43 +343,78 @@ let currentCard = null;
 let dueQueue = [];
 let sessionReviewed = 0;
 
-const BATCH_SIZE = 10; // 每次学习10个词
+const BATCH_SIZE = 10; // 每次学习10个新词
 
 function startReview() {
     const data = loadData();
-    const allDueWords = getDueWords(data.words);
+    const now = Date.now();
     
-    // 只取前5个待学习的词
-    dueQueue = allDueWords.slice(0, BATCH_SIZE);
+    // 分开统计：新词 vs 待复习的词
+    const newWords = data.words.filter(w => !w.lastReview); // 从未学过
+    const reviewWords = data.words.filter(w => w.lastReview && w.nextReview && w.nextReview <= now); // 学过且到期
     
-    console.log('[Review] Due words:', allDueWords.length, '| This batch:', dueQueue.length);
+    console.log('[Review] New words:', newWords.length, '| Due for review:', reviewWords.length);
+    
+    // 优先复习到期的词，然后才学新词
+    if (reviewWords.length > 0) {
+        // 有待复习的词，先复习
+        dueQueue = reviewWords.slice(0, BATCH_SIZE);
+        console.log('[Review] Reviewing', dueQueue.length, 'words');
+    } else if (newWords.length > 0) {
+        // 没有待复习的，学新词（每批10个）
+        dueQueue = newWords.slice(0, BATCH_SIZE);
+        console.log('[Review] Learning', dueQueue.length, 'new words');
+    } else {
+        dueQueue = [];
+    }
     
     const noCardsEl = document.getElementById('no-cards');
     const cardContainer = document.getElementById('card-container');
     
     if (dueQueue.length === 0) {
-        // Show completion message with next review time
-        const allDueWords = getDueWords(data.words);
+        // 重新计算状态
+        const newWordsLeft = data.words.filter(w => !w.lastReview).length;
+        const reviewWordsLeft = data.words.filter(w => w.lastReview && w.nextReview && w.nextReview <= Date.now()).length;
+        
+        // 找下一个要复习的词
         const nextWord = data.words
             .filter(w => w.nextReview && w.nextReview > Date.now())
             .sort((a, b) => a.nextReview - b.nextReview)[0];
         
+        let statusText = '';
         let nextReviewText = '';
-        if (nextWord) {
-            const waitTime = Math.ceil((nextWord.nextReview - Date.now()) / 1000);
-            nextReviewText = `<p style="margin-top:10px;font-size:14px;">下次复习：<strong>${formatNextReview(nextWord.nextReview)}</strong></p>`;
-            if (waitTime <= 180) { // 3分钟内自动刷新提示
-                nextReviewText += `<p style="font-size:12px;color:var(--text-secondary);">页面会自动刷新...</p>`;
-                setTimeout(() => startReview(), waitTime * 1000 + 1000);
+        let actionButton = '';
+        
+        if (reviewWordsLeft > 0) {
+            // 还有待复习的词
+            statusText = `还有 ${reviewWordsLeft} 个词待复习`;
+            actionButton = `<button onclick="location.reload()" style="padding:12px 24px;background:var(--accent-blue);color:white;border:none;border-radius:8px;cursor:pointer;font-size:16px;">继续复习</button>`;
+        } else if (newWordsLeft > 0) {
+            // 新词学完一批了，等待复习
+            statusText = `本批 ${BATCH_SIZE} 个新词学完了！`;
+            if (nextWord) {
+                const waitTime = Math.ceil((nextWord.nextReview - Date.now()) / 1000);
+                nextReviewText = `<p style="margin-top:10px;font-size:14px;">下次复习：<strong>${formatNextReview(nextWord.nextReview)}</strong></p>`;
+                if (waitTime <= 300) { // 5分钟内自动刷新
+                    nextReviewText += `<p style="font-size:12px;color:var(--text-secondary);">届时页面会自动刷新...</p>`;
+                    setTimeout(() => location.reload(), waitTime * 1000 + 1000);
+                }
+            }
+            actionButton = `<button onclick="forceNextBatch()" style="padding:12px 24px;background:var(--accent-orange);color:white;border:none;border-radius:8px;cursor:pointer;font-size:16px;margin-top:10px;">跳过等待，学下一批 (${Math.min(BATCH_SIZE, newWordsLeft)} 词)</button>`;
+        } else {
+            // 所有词都学过了
+            statusText = `太棒了！所有 ${data.words.length} 个词都学过了！`;
+            if (nextWord) {
+                nextReviewText = `<p style="margin-top:10px;font-size:14px;">下次复习：<strong>${formatNextReview(nextWord.nextReview)}</strong></p>`;
             }
         }
         
         noCardsEl.innerHTML = `
             <p>🎉</p>
-            <p>本轮 ${BATCH_SIZE} 个词学完了！</p>
-            ${sessionReviewed > 0 ? `<p style="color:var(--accent-green);margin-top:10px;">本次复习了 ${sessionReviewed} 个单词</p>` : ''}
+            <p>${statusText}</p>
+            ${sessionReviewed > 0 ? `<p style="color:var(--accent-green);margin-top:10px;">本次学习了 ${sessionReviewed} 个单词</p>` : ''}
             ${nextReviewText}
-            ${allDueWords.length > 0 ? `<p style="margin-top:15px;"><button onclick="startReview()" style="padding:10px 20px;background:var(--accent-blue);color:white;border:none;border-radius:8px;cursor:pointer;">继续学习下一批 (${Math.min(BATCH_SIZE, allDueWords.length)} 词)</button></p>` : ''}
+            <p style="margin-top:15px;">${actionButton}</p>
         `;
         noCardsEl.style.display = 'block';
         cardContainer.style.display = 'none';
@@ -500,6 +535,22 @@ function showAnswer() {
     }
 }
 
+// 跳过等待，强制学下一批新词
+function forceNextBatch() {
+    const data = loadData();
+    const newWords = data.words.filter(w => !w.lastReview);
+    
+    if (newWords.length > 0) {
+        dueQueue = newWords.slice(0, BATCH_SIZE);
+        sessionReviewed = 0;
+        
+        document.getElementById('no-cards').style.display = 'none';
+        document.getElementById('card-container').style.display = 'flex';
+        showNextCard();
+        updateStats();
+    }
+}
+
 function rateCard(rating) {
     const data = loadData();
     const wordIndex = data.words.findIndex(w => w.id === currentCard.id);
@@ -529,6 +580,9 @@ function rateCard(rating) {
             dueQueue.push(refreshedWord);
         }
     }
+    
+    // 实时更新统计
+    updateStats();
     
     showNextCard();
 }
