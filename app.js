@@ -69,23 +69,23 @@ function calculateNextReview(word, rating) {
     if (rating < 2) {
         // Failed - reset
         repetitions = 0;
-        interval = 1; // 1 minute for re-review
+        interval = 0.5; // 30 seconds for re-review
     } else {
         repetitions += 1;
         
         // Calculate new interval (in minutes)
         if (repetitions === 1) {
-            interval = 10; // 10 minutes
+            interval = 2; // 2 minutes (for testing)
         } else if (repetitions === 2) {
-            interval = 60; // 1 hour
+            interval = 2; // 2 minutes
         } else if (repetitions === 3) {
-            interval = 60 * 8; // 8 hours
+            interval = 2; // 2 minutes
         } else if (repetitions === 4) {
-            interval = 60 * 24; // 1 day
+            interval = 2; // 2 minutes
         } else if (repetitions === 5) {
-            interval = 60 * 24 * 3; // 3 days
+            interval = 2; // 2 minutes
         } else {
-            interval = Math.round(interval * easeFactor);
+            interval = 2; // 2 minutes for testing
         }
         
         // Adjust based on rating
@@ -215,6 +215,7 @@ function updateStats() {
     const stats = resetDailyStats();
     const dueWords = getDueWords(data.words);
     const newWords = getNewWords(data.words);
+    const learningWords = getLearningWords(data.words);
     const masteredWords = getMasteredWords(data.words);
     
     document.getElementById('due-count').textContent = dueWords.length;
@@ -224,8 +225,8 @@ function updateStats() {
     const progressEl = document.getElementById('progress-info');
     if (progressEl) {
         progressEl.innerHTML = `
-            <span class="progress-item">📚 新词 ${newWords.length}</span>
-            <span class="progress-item">🔄 学习中 ${getLearningWords(data.words).length}</span>
+            <span class="progress-item">📚 待学习 ${newWords.length}</span>
+            <span class="progress-item">🔄 学习中 ${learningWords.length}</span>
             <span class="progress-item">✅ 已掌握 ${masteredWords.length}</span>
         `;
     }
@@ -342,31 +343,43 @@ let currentCard = null;
 let dueQueue = [];
 let sessionReviewed = 0;
 
+const BATCH_SIZE = 5; // 每次学习5个词
+
 function startReview() {
     const data = loadData();
-    dueQueue = getDueWords(data.words);
+    const allDueWords = getDueWords(data.words);
     
-    console.log('[Review] Due words:', dueQueue.length);
+    // 只取前5个待学习的词
+    dueQueue = allDueWords.slice(0, BATCH_SIZE);
+    
+    console.log('[Review] Due words:', allDueWords.length, '| This batch:', dueQueue.length);
     
     const noCardsEl = document.getElementById('no-cards');
     const cardContainer = document.getElementById('card-container');
     
     if (dueQueue.length === 0) {
         // Show completion message with next review time
+        const allDueWords = getDueWords(data.words);
         const nextWord = data.words
-            .filter(w => w.nextReview)
+            .filter(w => w.nextReview && w.nextReview > Date.now())
             .sort((a, b) => a.nextReview - b.nextReview)[0];
         
         let nextReviewText = '';
         if (nextWord) {
-            nextReviewText = `<p style="margin-top:10px;font-size:14px;">下次复习：${formatNextReview(nextWord.nextReview)}</p>`;
+            const waitTime = Math.ceil((nextWord.nextReview - Date.now()) / 1000);
+            nextReviewText = `<p style="margin-top:10px;font-size:14px;">下次复习：<strong>${formatNextReview(nextWord.nextReview)}</strong></p>`;
+            if (waitTime <= 180) { // 3分钟内自动刷新提示
+                nextReviewText += `<p style="font-size:12px;color:var(--text-secondary);">页面会自动刷新...</p>`;
+                setTimeout(() => startReview(), waitTime * 1000 + 1000);
+            }
         }
         
         noCardsEl.innerHTML = `
             <p>🎉</p>
-            <p>太棒了！暂无待复习单词</p>
+            <p>本轮 ${BATCH_SIZE} 个词学完了！</p>
             ${sessionReviewed > 0 ? `<p style="color:var(--accent-green);margin-top:10px;">本次复习了 ${sessionReviewed} 个单词</p>` : ''}
             ${nextReviewText}
+            ${allDueWords.length > 0 ? `<p style="margin-top:15px;"><button onclick="startReview()" style="padding:10px 20px;background:var(--accent-blue);color:white;border:none;border-radius:8px;cursor:pointer;">继续学习下一批 (${Math.min(BATCH_SIZE, allDueWords.length)} 词)</button></p>` : ''}
         `;
         noCardsEl.style.display = 'block';
         cardContainer.style.display = 'none';
