@@ -174,8 +174,15 @@ function loadVoices() {
         const voices = window.speechSynthesis.getVoices();
         dutchVoices = voices.filter(v => v.lang.startsWith('nl'))
             .sort((a, b) => {
+                // 优先选择女声
+                const aFemale = /female|vrouw|ellen|xander|lotte|lisa|anna|maria|sophie/i.test(a.name);
+                const bFemale = /female|vrouw|ellen|xander|lotte|lisa|anna|maria|sophie/i.test(b.name);
+                if (aFemale && !bFemale) return -1;
+                if (!aFemale && bFemale) return 1;
+                // 然后优先本地语音
                 if (a.localService && !b.localService) return -1;
                 if (!a.localService && b.localService) return 1;
+                // 然后优先 nl-NL
                 if (a.lang === 'nl-NL' && b.lang !== 'nl-NL') return -1;
                 if (a.lang !== 'nl-NL' && b.lang === 'nl-NL') return 1;
                 return 0;
@@ -191,11 +198,12 @@ function speak(text) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'nl-NL';
         utterance.rate = 0.85;
-        utterance.pitch = 1.0;
+        utterance.pitch = 1.1; // 稍高音调，更柔和
         utterance.volume = 1.0;
         
         if (dutchVoices.length > 0) {
             utterance.voice = dutchVoices[0];
+            console.log('[TTS] Using voice:', dutchVoices[0].name);
         }
         
         window.speechSynthesis.speak(utterance);
