@@ -343,7 +343,7 @@ let currentCard = null;
 let dueQueue = [];
 let sessionReviewed = 0;
 
-const BATCH_SIZE = 5; // 每次学习5个词
+const BATCH_SIZE = 10; // 每次学习10个词
 
 function startReview() {
     const data = loadData();
